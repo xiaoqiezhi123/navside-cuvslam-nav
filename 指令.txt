@@ -1,0 +1,49 @@
+1.机器人本体启动     cd ~/nav_arm_mujoco/PhybotSoftware_c2/build    ./main
+
+2. 重定位        cd ~/cuvslam_migrate-9.1
+CUVSLAM_CAMERA_SERIAL=<SLAM_CAM_SERIAL> ./run_orbbec.sh --mode localize
+
+<SLAM_CAM_SERIAL>为cuvslam相机
+<NAVSIDE_CAM_SERIAL>为SRU相机
+
+地图名称
+test01 1楼正向俩圈
+test02 流畅1楼正向俩圈 +逆直道
+
+
+
+3.键盘控制
+cd ~/navside_real/NavSide_log/Navside-9.4
+sudo ~/nav_arm_mujoco/.venv_navside/bin/python scripts/wasd_control.py  
+
+
+4.地图标注（给A*画可通行区域）
+cd /home/amov/cuvslam_migrate-9.1
+./run_map2d_annotator.sh \
+  --source-json maps2d/viz_test_02/v6_reviewed/source_map.json \
+  --annotations maps2d/viz_test_02/v6_reviewed/annotations.json \
+  --hide-candidates --erase-radius-m 0.30 \
+  --out maps2d/viz_test_02/annotations_next.json
+
+
+5. 任务点选点与A*参考点可视化
+cd /home/amov/navside_real/NavSide_log/Navside-9.1
+./run_task_nav.sh --pick-only
+
+6. 启动版本调度器(分段导航)
+cd /home/amov/navside_real/NavSide_log/Navside-9.1
+./run_task_nav.sh --sru --task-points-file config/task_points_selected.json
+
+7.source /home/amov/cuvslam_migrate/venv/bin/activate && export LD_LIBRARY_PATH="/home/amov/cuvslam_migrate/venv/lib/python3.10/site-packages:$LD_LIBRARY_PATH" && cd ~/cuVSLAM-finally/cuVSLAM-main/examples/orbbec && python3 run_vio_finally.py
+
+新版cuvslam  source /home/amov/cuvslam_migrate/venv/bin/activate && export LD_LIBRARY_PATH="/home/amov/cuvslam_migrate/venv/lib/python3.10/site-packages:$LD_LIBRARY_PATH" && cd ~/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec && python3 run_vio_tasknav_finally.py
+
+cd /home/amov/navside_real/NavSide_log/Navside-9.1
+./run_task_nav.sh --config config/task_nav_finally3.yaml
+
+
+
+
+
+
+

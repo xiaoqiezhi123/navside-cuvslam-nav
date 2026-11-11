@@ -1,0 +1,59 @@
+# PathAware 真机配置：参考原版 nav.yaml，保留独立文件，便于回退。
+# --config 指定哪一份就只读取哪一份；两份不合并、不自动继承，修改互不影响。
+# 默认调度器 task_nav.yaml 使用本文件；task_nav_legacy.yaml 使用 nav.yaml。
+# 15 点包含起点/终点；模型路径 Z=0.5，打印用地图 Y=0，与目标 Z=0.695 分开。
+models:
+  # 沿用原版 Orbbec mix VAE。
+  encoder_path: ../asset/models/vae_orbbec_mix_ep30_deploy.onnx
+  # 新版策略：输入 2636 维，其中新增 15×4=60 维路径特征；原策略保留。
+  policy_path: ../asset/models/nav_policy_pathaware.onnx
+
+# 新增：路径模型模式及实际接收位姿的有效期。
+policy:
+  mode: path_aware        # 必须与调度器 path_aware.enabled=true 配套，不是 SRU 总开关
+  state_max_age_s: 1.0    # 超过 1 秒没有新位姿先发零速等待；读取旧缓存不刷新有效期
+  # 新增：只对短时位姿断流自动恢复，人工 A/F/G 或调度器 pause 仍须 localize。
+  pose_recovery:
+    timeout_s: 5.0               # 进入等待后最多 5 秒（断流总时长最多约 1+5 秒），超时必须 localize
+    stable_s: 0.6                # 恢复数据连续有效且位置/姿态稳定至少 0.6 秒，才继续原段
+    min_samples: 3              # 且至少 3 个不同的新位姿；重复读取缓存不计数
+    max_sample_gap_s: 0.3        # 恢复阶段相邻采样间隔和包龄上限；超出则重新累计稳定时间
+    max_position_jump_m: 1.5    # 相邻采样位置突变阈值；跨断流另加发零前可行进距离（模式限速×时间）
+    max_rotation_jump_deg: 60.0 # 相邻位姿/等待前后姿态变化超过 60 度：同上
+    stable_position_span_m: 0.15 # 新增：恢复稳定窗口内位置变化不超过 0.15 米；旧帧追赶时重新计时
+    stable_rotation_span_deg: 10.0 # 新增：恢复稳定窗口内姿态变化不超过 10 度
+
+control:
+  dry_run_hz: 5.0  # 与原版 10 Hz 不同：按已确认要求使用 5 Hz，调度器也校验该值
+  # 以下通用控制参数与 nav.yaml 一致。
+  # 真机 S/D 限速在 navside/mode.py 的 _DECISIONS 修改，会覆盖此处默认限速。
+  vx_max: 0.9
+  wz_max: 0.5
+  walk_threshold: 0.3
+  goal_pos_tolerance: 0.80  # 下游到点停车距离；调度器 VIO 到达阈值在 task_nav.yaml
+
+depth:
+  backend: orbbec
+  realsense_config: realsence_config.yaml
+  min_depth: 0.10
+  max_depth: 10.0
+  over_range_value: 6.0  # 新增显式参数：超 10 m 置 6 m，保留原版 mix 的处理方式
+  # 必要差异：原版 YAML 写 1152×720，但旧适配器实际未按该值裁剪，
+  # 1280×720 输入会整帧缩到 64×40。这里保持原实际视场，并使预览与推理一致。
+  # 新模式按此处尺寸中心裁剪；输入图像小于该尺寸会报错，不能随意放大。
+  crop_width: 1280
+  crop_height: 720
+
+goal:
+  # 数值沿用原版；分段导航的真实目标来自调度器，本默认值不触发行进。
+  # 新模式必须收到整段路径与启动确认，不能独立使用默认目标启动导航。
+  default_goal_w: [6.5, 0, 0.695]
+
+logging:
+  verbose_sru: false
+  summary_hz: 1.0
+  csv_enabled: true
+  csv_dir: logs
+
+# 本文件用于真机 PathAware；nav.yaml 的 sim/udp 两组不参与这个真机入口，故不复制。
+# 真机通信配置读取同目录 nav_deploy.yaml（或 --deploy-config 显式指定的文件）。

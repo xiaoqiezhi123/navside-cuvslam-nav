@@ -1,0 +1,60 @@
+# ===== 压缩包 / 归档 =====
+*.zip
+*.tar.gz
+*.tar
+*.tgz
+
+# ===== 大数据 / 运行时产物 =====
+*.rrd
+*.onnx
+*.mdb
+*.npz
+*.bag
+*.db
+*.pth
+*.pt
+*.ckpt
+
+# ===== 日志 =====
+logs/
+Log/
+*.log
+
+# ===== Python 运行时 =====
+__pycache__/
+*.pyc
+*.pyo
+*.bak*
+*.rrd
+
+# ===== IDE / 编辑器 =====
+.vscode/
+.marscode/
+.agents/
+.idea/
+
+# ===== 虚拟环境 =====
+.venv_navside
+.venv/
+venv/
+
+# ===== NavSide：模型权重 / 机器人网格 / 日志（SRU 参数隐藏）=====
+Navside-9.1-10.30/Navside-9.1/asset/
+Navside-9.1-10.30/Navside-9.1/logs/
+Navside-9.1-10.30/Navside-9.1/Log/
+
+# ===== 旧版 cuVSLAM 树（1028 是 1030 的子集，冗余，排除）=====
+/cuVSLAM-finally3-1028/
+
+# ===== NVIDIA cuVSLAM 源码：只保留 examples/orbbec 调用脚本 + LICENSE =====
+/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/*
+!/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/LICENSE
+!/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/
+/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/*
+!/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec/
+/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec/*
+!/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec/*.py
+!/cuVSLAM-finally3-1030/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec/*.sh
+
+# ===== 站点数据（现场坐标/地图指纹）=====
+Navside-9.1-10.30/Navside-9.1/config/task_points_selected.json

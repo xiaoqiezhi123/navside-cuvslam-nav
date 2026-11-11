@@ -1,0 +1,49 @@
+models:
+  encoder_path: ../asset/models/vae_encoder.onnx
+  policy_path: ../asset/models/model_14999.onnx
+  #policy_path: ../asset/models/policy.onnx
+  #policy_path: ../asset/models/1/policy.onnx
+control:
+  dry_run_hz: 10.0
+  vx_max: 0.9
+  wz_max: 0.5
+  walk_threshold: 0.3
+  goal_pos_tolerance: 0.80
+
+depth:
+  backend: orbbec
+  #backend: realsense
+  realsense_config: realsence_config.yaml
+  min_depth: 0.10
+  max_depth: 10.0
+  crop_width: 1152
+  crop_height: 720
+
+goal:
+  # 任务导航模式（run_task_nav.sh）下 goal 由 config/task_nav.yaml 的任务点驱动：
+  # 调度器每段下发 "goal x y z"，随任务点推进自动更新；此处 default_goal_w
+  # 仅用于独立运行 run_nav.py 时的默认目标。其余配置（速度/适配器等）不受影响。
+  default_goal_w: [6.50 , 0, 0.695]
+  #default_goal_w: [12.00 , 1, 0.695]
+logging:
+  verbose_sru: false
+  summary_hz: 1.0
+  csv_enabled: true
+  csv_dir: logs
+
+sim:
+  # Local MuJoCo scene and resource tree copied into this workspace.
+  mujoco_xml_path: ../asset/robot/phybot_mini_mark2/xml/phybot_real.xml
+  camera_name: head_camera
+  render_width: 1920
+  render_height: 1200
+  render_fps: 30.0
+  display_scale: 0.5
+
+udp:
+  local_ip: 127.0.0.1
+  local_port: 8081
+  #local_port: 8083
+  remote_ip: 127.0.0.1
+  remote_port: 8080
+  #remote_port: 8084

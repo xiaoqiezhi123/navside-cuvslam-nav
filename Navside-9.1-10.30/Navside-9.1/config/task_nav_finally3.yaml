@@ -1,0 +1,84 @@
+
+# =============================================================================
+# 任务导航调度配置 —— finally3 版（cuVSLAM 已迁移到 run_vio_tasknav_finally.py）
+#
+# 与原 task_nav.yaml 的差异（仅 4 处指向 + 参考地图名）：
+#   1. ref_map = "10261"（finally3 的参考地图）
+#   2. astar.map_package = "maps2d/10261/<version>"（标注审核后的 2D 规划地图包）
+#   3. cuvslam_repo = …/cuVSLAM-main/examples（其 orbbec/ 已自包含 map2d 模块 + 地图）
+#   4. cuvslam_cmd = run_vio_tasknav_finally.sh（finally3 启动脚本）
+# 其余（SRU/path_aware/容差/相机串号/到达判定）与原版一致，不改。
+#
+# 注意：map_package 必须指向「已审核（reviewed=true）」的版本，
+#       load_planning_map 会拒绝加载未审核草稿；且其 source_db_sha256 必须等于
+#       orbbec/10261/data.mdb 的 sha256（e72eff69…），否则报 map_identity_mismatch。
+# =============================================================================
+
+# 参考地图名：cuVSLAM 用它对当前帧做全局定位（localize 锚定），
+# 也是 2D 规划地图所在目录名（maps2d/<ref_map>/…）。
+ref_map: "10261"
+
+# 任务点文件：存放地图里已选好的目标点（含 map_id / map_version / 点位 XYZ）。
+# 不启动相机只选点：./run_task_nav.sh --pick-only
+task_points_file: "config/task_points_selected.json"
+
+# ---- A* 2D 路径规划 ----
+astar:
+  # 2D 规划地图包：maps2d/<map_id>/<version>（版本须 reviewed=true，见顶部说明）。
+  map_package: "maps2d/10261/v7_reviewed"
+  # 路径是否强制包含起点 / 终点（PathAware 分段要求 15 点含起终点，一般不动）。
+  include_start: true
+  include_goal: true
+  # A* 规划结果（path.json 等）输出目录。
+  output_directory: "logs/task_nav/astar"
+  # 中心偏好：让规划路径尽量走可通行区域的「中心线」，避开靠墙/靠障碍的窄边。
+  center_preference:
+    enabled: true              # 是否启用中心偏好（关了路径更短但更贴边）
+    decay_length_m: 0.8        # 中心代价的衰减长度：越大越往远处「拉回」中心
+    cost_weight: 4.0           # 中心代价权重：越大越靠中心线，越小越走捷径
+    simplification_tolerance_m: 0.10  # 路径简化容差（米）：越大路径点越少
+    max_clearance_loss_m: 0.05 # 简化时允许损失的最大 clearance（米），保护贴边安全
+
+# ---- SRU（NavSide 深度推理 + 运动控制）----
+sru:
+  enabled: true                # false = 仅定位/规划，不启深度相机与运动控制
+
+# ---- PathAware 分段导航协议 ----
+path_aware:
+  enabled: true                # 是否按 15 点分段交付给 NavSide（false = 单目标直发）
+  ready_timeout_s: 60          # 等待下游「已加载本段」确认的超时（秒）
+  running_timeout_s: 10        # 等待下游「已开始运行本段」确认的超时（秒）
+
+# 机器人世界系 Z 高度（米）：固定在地图坐标系里，任务点/规划的 Y 都用这个值。
+robot_height_z: 0.695
+
+# 锚定（localize）成功后的位姿偏差校验容差（米）：超过则要求重定位，
+# 需手动 localize 或 force 跳过（force 只能跳偏差，不能跳 A* 失败）。
+anchor_verify_tolerance_m: 5.0
+
+# ---- 各阶段超时（秒）----
+boot_ready_timeout_s: 60       # cuVSLAM 启动就绪（首帧位姿）超时
+startup_anchor_timeout_s: 180  # 启动阶段自动锚定超时
+anchor_timeout_s: 240          # 单次 localize 锚定超时
+segment_arrive_timeout_s: 600  # 单段行进到点超时（超时判本段失败）
+
+# ---- 到达判定 ----
+arrive_tolerance_m: 0.7        # 距目标点多少米以内算「到点」（米）
+arrive_confirm_s: 1.0          # 到点后需持续稳定多久才确认（秒）
+
+# ---- cuVSLAM 子进程（finally3，SLAM 位姿源）----
+cuvslam_repo: "/home/amov/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples"
+cuvslam_cmd: ["/home/amov/cuVSLAM-finally3-1028/cuVSLAM-finally3/cuVSLAM-main/examples/orbbec/run_vio_tasknav_finally.sh"]
+
+# ---- NavSide 子进程（推理 + 控制，深度感知）----
+navside_repo: "/home/amov/navside_real/NavSide_log/Navside-9.1"
+navside_cmd: ["/home/amov/navside_real/NavSide_log/Navside-9.1/scripts/run_nav.py", "--real",
+              "--config", "/home/amov/navside_real/NavSide_log/Navside-9.1/config/nav_pathaware.yaml",
+              "--show-depth"]
+
+# ---- 子进程环境变量（在继承当前环境的基础上覆盖）----
+env:
+  cuvslam:
+    CUVSLAM_CAMERA_SERIAL: "<SLAM_CAM_SERIAL>"   # SLAM 相机串号（Orbbec 2.3.5）
+  navside:
+    NAVSIDE_CAMERA_SERIAL: "<NAVSIDE_CAM_SERIAL>"   # NavSide 深度相机串号（Orbbec 2.9.3）

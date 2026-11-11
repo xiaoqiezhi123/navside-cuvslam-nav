@@ -1,0 +1,53 @@
+# D455F RealSense 相机配置文件，由 RealSenseDepthPerception 加载。
+# 选项名称必须严格匹配 pyrealsense2 库中的 rs.option 枚举。
+# 如果连接的固件不支持某个选项，程序会跳过并发出警告（不会报错）。
+
+# ==================== 深度流配置 ====================
+depth_stream:
+  width: 1280                   # 深度图像宽度（像素），与 NavSide 默认 RAW_WIDTH 一致
+  height: 720                   # 深度图像高度（像素），与 NavSide 默认 RAW_HEIGHT 一致
+  fps: 30                       # 帧率（帧/秒）
+
+  options:
+    # ---- 核心深度质量 ----
+    # 视觉预设模式: 0=Custom, 1=Default, 2=Hand, 3=High Accuracy, 4=High Density, 5=Medium Density
+    visual_preset: "1"           # High Accuracy — 导航场景优先保证精度
+
+    # ---- 红外投影仪（激光发射器） ----
+    emitter_enabled: True        # 启用红外激光投影仪，为场景提供纹理以提升深度匹配精度
+    laser_power: 360             # 激光功率（0-360 mW），最大功率确保远距与暗环境下有效探测
+
+    # ---- 深度单位 ----
+    depth_units: 0.001           # 深度值换算系数（米），D400 系列固定为 0.001（毫米级）
+
+    # ---- 自动曝光/增益 ----
+    enable_auto_exposure: True   # 自动曝光，固件根据场景自适应调整 exposure 和 gain
+    exposure: 8500               # 手动曝光时间（微秒），仅在自动曝光关闭时生效
+    gain: 16                     # 手动增益（dB），仅在自动曝光关闭时生效
+
+    # ---- 置信度 ----
+    confidence_threshold: 2      # 置信度阈值 (0-3)，2 为均衡精度与覆盖的推荐值
+
+    # ---- 帧队列 ----
+    frames_queue_size: 2         # 内部帧队列缓冲大小，降低可减少延迟
+
+
+# ==================== 深度后处理滤波器（CPU 端） ====================
+# 标准 D400 管线: disparity→ → spatial → temporal → disparity← → hole_filling
+post_processing:
+  enabled: true                  # 后处理总开关
+
+  spatial:                       # 空间边缘保持滤波：平滑深度噪声、填补小空洞
+    enabled: true
+    smooth_alpha: 0.5            # 平滑强度系数 (0-1)
+    smooth_delta: 20             # 边缘保持阈值，大于该差值的像素不参与平滑
+    holes_fill: 2                # 空洞填充范围 (0-5)
+
+  temporal:                      # 时域滤波：利用多帧历史平滑深度图，消除帧间闪烁
+    enabled: true
+    smooth_alpha: 0.4            # 时域平滑系数 (0-1)
+    smooth_delta: 20             # 时域边缘保持阈值
+
+  hole_filling:                  # 独立空洞填充：对剩余缺失区域进行插值填充
+    enabled: true
+    holes_fill: 1                # 填充模式：1=最近邻域填充，2=更远邻域填充

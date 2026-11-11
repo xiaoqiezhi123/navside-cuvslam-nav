@@ -1,0 +1,39 @@
+# Foxglove WebSocket 地址，用于订阅 ROS 里程计数据
+#websocket_uri: "ws://<INTERNAL_IP>:8765"
+#websocket_uri: "ws://<INTERNAL_IP>:8765"
+websocket_uri: "ws://<INTERNAL_IP>:8765"
+
+
+# 订阅的里程计话题名称
+odom_topic: "/high_frequency_odometry_baselink"
+
+# 订阅的速度指令话题名称
+cmd_vel_topic: "/final_cmd_vel"
+
+# 导航调度 API 服务器地址，用于拉取任务目标点、注册状态回调
+#api_url: "http://<INTERNAL_IP>:10000"
+#api_url: "http://<INTERNAL_IP>:10000"
+api_url: "http://<INTERNAL_IP>:10000"
+
+# 本机 IP，API 服务器通过此地址回调 /status_feedback 推送任务状态
+#status_callback_ip: "<INTERNAL_IP>"
+#status_callback_ip: "<INTERNAL_IP>"
+status_callback_ip: "<INTERNAL_IP>"
+
+# 本机 HTTP 回调服务监听端口
+status_callback_port: 12130
+
+# 地图名称，作为查询任务详情的参数
+#map_name: "琶洲"
+map_name: "动易科技工厂"
+
+# 任务名称，作为查询任务详情的参数
+task_name: "ce1"
+
+# 是否跳过重定位阈值校验 (true=跳过，直接确认重定位; false=校验不确定度)
+skip_reloc_threshold: true
+
+
+cmd_remote_ip: "127.0.0.1"
+
+cmd_remote_port: 8080
